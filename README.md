@@ -18,3 +18,4 @@ The reasoning behind the naming is the parser only analyzes a small subset of C,
 - __while__ and __do/while__ statements
 - __for__ statements
 - __return__ statements
+- __printf__ syntax specification
