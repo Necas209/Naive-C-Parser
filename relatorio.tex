@@ -1,0 +1,199 @@
+\documentclass{report}
+\usepackage[portuges]{babel}
+\usepackage[utf8]{inputenc}
+
+\usepackage{url}
+\usepackage{alltt}
+\usepackage{parskip}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyvrb}
+\usepackage{graphicx}
+\usepackage{algorithmic}
+\usepackage{moreverb}
+\usepackage[lined,algonl,boxed]{algorithm2e}
+\usepackage{lineno}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{\baselineskip}
+
+\titleformat{\chapter}[display]
+   {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{10pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+
+\title{{\bf Compiladores}\\Eng.ª Informática - 2.º ano\\ Teresa A. Perdicoúlis\\ \vspace*{3cm}\textbf{Projeto Prático}\\ Implementação de um Analisador Sintático \vspace*{1cm}}
+\author{Diogo Medeiros (70633) \and Eduardo Chaves (70611) \and João Rodrigues (70579) \and Tiago Lameirão (70636)}
+\date{janeiro 2021}
+
+\begin{document}
+
+\begin{figure}
+\includegraphics[width=8cm]{utad}
+\end{figure}
+
+\maketitle
+
+\begin{abstract}
+
+Este projeto prático consistiu no desenvolvimento de um analisador sintático para a linguagem C, envolvendo ferramentas como o Flex e o Bison. Dada a linguagem C ser demasiado extensa, optou-se por desenvolver um analisador capaz de verificar uma versão simplificada da mesma. 
+
+O analisador em causa é capaz de detetar erros, quer léxicos, quer sintáticos, informando o utilizador da localização dos mesmos. Nalguns casos, produz uma mensagem mais detalhada, permitindo a correção imediata de falhas tais como a ausência de caracteres de finalização em declarações.
+
+Crê-se que o objetivo proposto foi atingido na medida em que os pressupostos do protocolo foram concretizados.
+
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Introdução}
+
+Este relatório visa descrever o projeto prático realizado, consistindo o mesmo no desenvolvimento de um analisador sintático para a linguagem C. 
+
+Para a realização do trabalho prático, foram usados os conhecimentos adquiridos quer nas aulas teóricas, quer nas aulas práticas, recorrendo também à bibliografia disponibilizada pela docente, bem como outras fontes devidamente identificadas neste relatório.
+
+Ao longo do relatório será descrito o processo de conceção do trabalho bem como algumas considerações pertinentes.
+
+O capítulo 3 descreve não só a solução proposta para o problema em questão, bem como o enquadramento teórico da mesma.
+
+Quanto ao capítulo 4, este detalha a implementação do código, evidenciando as decisões tomadas e justificando as mesmas. Uma vez que o objetivo deste trabalho é a análise e consequente deteção de erros num ficheiro de texto escrito em C, esta análise é demonstrada através de exemplos que evidenciam o funcionamento do analisador sintático construído.
+
+Crê-se ter atingido os pressupostos descritos no protocolo do trabalho, na medida em que o analisador sintático desenvolvido cumpre os fins propostos.
+
+\chapter{Análise e Especificação}
+
+\section{Descrição informal do problema}
+
+O problema é definido pela análise de um texto e pela sua verificação. Neste caso, a solução traduz-se em implementar um analisador sintático capaz de verificar esse mesmo texto, redigido em linguagem C (numa versão simplificada, \textit{naive} C).
+
+\section{Especificação dos Requisitos}
+
+\subsection{Dados}
+
+Dispõe-se de um texto para análise e verificação de eventuais erros. Este texto é escrito na linguagem C.
+
+Também são disponibilizadas ferramentas de geração de reconhecedores léxicos, no caso do Flex/Lex, e sintáticos, no caso do YACC/Bison.
+
+\subsection{Pedidos}
+
+É solicitada a análise do texto ao nível da sintaxe e do léxico (validade dos lexemas) e verificação de possíveis erros.
+
+\subsection{Relações}
+
+Tal como foi referido acima, a solução passa por desenvolver um analisador sintático auxiliado por um reconhecedor léxico, cujo resultado será o texto analisado e tratado em termos de erros. Para tal, serão usadas ferramentas, nomeadamente, Flex/Lex e YACC/Bison.
+
+\chapter{Conceção da Resolução}
+
+Por definição, um analisador léxico tem como função a leitura de caracteres, um a um, do buffer e agrupá-los em lexemas/tokens de acordo com a situação e contexto. Assim, a sequência original de caracteres torna-se numa sequência de tokens que é enviada ao analisador sintático \cite{su2011principles}.
+
+Para a identificação dos respetivos tokens, torna-se necessária a construção de expressões regulares que caracterizem os diferentes elementos que compõem a linguagem em questão, tais como palavras-chave, operadores, identificadores de variáveis e funções, literais, e até mesmo comentários.
+
+Na prática, dispõe-se da ferramenta Flex/Lex para desenvolver e gerar um reconhecedor léxico para a linguagem C. A cada regra do analisador especificado no flex deverá estar associada a ação de retornar um identificador do token reconhecido ao analisador sintático, para que este possa realizar o parsing.
+
+Por outro lado, o analisador sintático usa os tokens produzidos pelo analisador léxico para criar uma representação intermédia semelhante a uma árvore que evidencia a estrutura gramatical da stream de tokens \cite{aho1986compilers}. Esta representação denomina-se árvore de sintaxe. 
+
+Os parsers LR são uma classe de métodos bottom-up que aceita uma amplitude maior de gramáticas relativamente aos reconhecedores LL(1). Por outro lado, estes permitem a declaração externa da precedência dos operadores para resolver questões de ambiguidade, em vez de exigirem que as próprias gramáticas não sejam ambíguas \cite{mogensen2009basics}. A maioria dos geradores de parsers LR usa uma versão alargada da construção SLR denominada LALR (1). O "LA" indica uma abreviatura de "lookahead" (oráculo) e o (1) indica que tem a capacidade  de antever o próximo símbolo de entrada \cite{mogensen2009basics}. 
+
+A ferramenta utilizada é o YACC, com a capacidade de gerar um AS a partir de uma gramática independente de contexto (GIC), nomeadamente gera um parser LALR(1), pelo que a gramática construída deverá evitar situações tais como a recursividade à direita e a ambiguidade de modo a evitar conflitos.
+
+\chapter{Codificação e Testes}
+
+\section{Alternativas, Decisões e Problemas de Implementação}
+
+Este trabalho desenvolveu-se em várias etapas sucessivas. Inicialmente, procedeu-se à identificação dos tokens de C a serem reconhecidos. Optou-se por identificar palavras-chave relativas à declaração de variáveis e estruturas (\texttt{int, char, struct}, etc.), e instruções (\texttt{if, for}, etc).
+
+Em termos   de operadores de C, fizemos o reconhecimento léxico, não só dos operadores solicitados no protocolo, mas sim de todos os operadores aritméticos, de comparação, lógicos,  bitwise, de atribuição e outros operadores de marcação tais como ';', ',', e '.'.
+
+Por outro lado, o nosso reconhecedor léxico reconhece variáveis, literais (números inteiros e reais, caracteres literais e strings), estruturas de dados, funções, e instruções elementares de C. Por questões de simplicidade optou-se por definir as expressões regulares mais extensas na secção de definições do Flex como macros.
+
+Ainda quanto ao analisador léxico, o mesmo possui ERs para filtrar comentários e \textit{whitespace} (indentações, mudanças de linha e espaços) e identificar diretivas do pré-processador de C, nomeadamente \texttt{\#include}.
+
+Dado o AL funcionar como uma sub-rotina do AS, este deverá devolver, sempre que necessário e adequado, um valor definido pelo AS e associado ao respetivo token. Isto é possível pela diretiva \texttt{\#include "mycc.tab.h"}, presente nas definições de C do Flex.
+No caso dos operadores formados por apenas um caractere, optou-se por retornar o mesmo ao AS, dado haver uma correspondência entre este e o respetivo valor decimal, por exemplo, no caso de '=', temos como ação \texttt{return *yytext}. No caso dos literais e dos identificadores de variáveis, guardou-se o token identificado pela variável \texttt{yytext} na variável \texttt{yylval}, do YACC, servindo-se de uma união para distinguir inteiros, reais e strings, i.e., a ação \texttt{yylval.string=strdup(yytext)}.
+Já na especificação do AS, isto é possível graças ao uso da instrução \texttt{\%union} e de instruções tais como \texttt{\%token <string> VAR}.
+
+Relativamente ao analisador sintático, foi usada a ferramenta YACC/Bison que permite gerar um reconhecedor LALR(1) a partir de uma gramática independente de contexto (GIC). Por esta razão, teve-se o cuidado de definir produções com recursividade à esquerda, dado que o reconhecedor deriva mais à direita e assim evita-se a ocupação excessiva da pilha interna do analisador sintático. De referir que se prescindiu de construir um AFD LALR(1) dada a complexidade da gramática desenvolvida bem como da linguagem C.
+
+Na linguagem C, cada operador tem um nível de precedência e um tipo de associatividade ligado ao mesmo. No nosso caso, recorremos a instruções de declaração de tokens, tais como \texttt{\%token}, \texttt{\%left} e \texttt{\%right}, a fim do analisador sintático reconhecer esta informação para cada operador, resolvendo assim problemas de ambiguidade e possíveis conflitos, \texttt{\%left '+'} e \texttt{\%right '='}, presentes nas definições do ficheiro "mycc.y". O uso de tokens definidos por \texttt{\%nonassoc}, por exemplo, \texttt{\%nonassoc UMINUS}, permite a distinção entre operadores distintos que partilham a mesma grafia, por exemplo o operador de subtração '-' e o operador unário '-', em conjunto com a instrução \texttt{\%prec}, presente na respetiva produção, i.e., \texttt{alg\_cond\_expr : '-' alg\_cond\_expr \%prec UMINUS}.
+
+Relativamente ao tratamento de erros, no caso do AL, optou-se por identificar e contabilizar os erros léxicos presentes, sem informar o AS da sua existência permitindo a este prosseguir com o \textit{parsing}, ainda que no final, o utilizador seja informado de que o \textit{parsing} não foi bem-sucedido.
+
+A ferramenta YACC/Bison recorre a uma função, \texttt{yyerror}, sempre que é detetado um erro no  \textit{parsing}. Na nossa especificação, são identificados erros de sintaxe detalhados, graças às diretivas \texttt{\%define parse.lac none} e \texttt{\%define parse.error verbose}, presentes nas definições do "mycc.y".
+Quando um erro sintático é detetado, o \textit{parsing} termina e o utilizador é informado da linha em que foi detetado o erro e, por vezes, a causa do mesmo.
+Como a linguagem C ignora a existência de \textit{whitespace}, sendo este unicamente útil para o programador estruturar o seu código, ocorre que o erro pode ser detetado na linha seguinte, o que dificulta a identificação por parte do utilizador. Contudo, este tipo de identificação é comum à maioria dos compiladores de C, i.e., o GCC (GNU Compiler Collection).
+
+\newpage
+\section{Testes realizados e Resultados}
+Apresentam-se, de seguida, alguns exemplos dos testes realizados, demonstrando a deteção de erros, quer léxicos, quer sintáticos.
+
+\noindent \textbf{Exemplo 1}
+
+Neste exemplo verifica-se a análise bem sucedida, demonstrando a inexistência de erros.
+
+\noindent Input:
+\verbatimtabinput{./source/testes/teste.c}
+Output:
+
+\noindent \texttt{Parsing Successful.}
+
+\newpage
+
+\noindent \textbf{Exemplo 2}
+
+Este exemplo evidencia a deteção de um erro léxico e um erro sintático, explicitando as respetivas linhas.
+
+\noindent Input:
+
+\begin{linenumbers}
+\verbatimtabinput{./source/testes/teste2.c}
+\end{linenumbers}
+
+\noindent Output:
+
+\noindent \texttt{Line: 4\\Error: Invalid token in '4ec'\\
+Line: 8\\Error: syntax error, unexpected ')'\\
+Found 1 lexical errors. Parsing Failed.}
+
+\noindent \textbf{Exemplo 3}
+
+Este exemplo evidencia a ocorrência dum erro sintático de finalização de declaração.
+
+\noindent Input:
+
+\resetlinenumber
+\begin{linenumbers}
+\verbatimtabinput{./source/testes/teste3.c}
+\end{linenumbers}
+
+\noindent Output: \\
+\noindent \texttt{Line: 7\\ Error: syntax error, unexpected RETURN, expecting ';'\\Parsing Failed.}
+
+\chapter{Conclusão}
+
+Consideramos que este trabalho foi um desafio na medida em que o protocolo solicitava a execução de um AS que verifique uma versão simplificada da linguagem C, discriminando os conteúdos presentes nos programas a testar, no entanto, o grupo esforçou-se para incluir outras especificações de C, enriquecendo assim o projeto desenvolvido.
+
+Outra exceção ao protocolo, foi a inclusão de ações adicionais ao AL em conformidade com a especificação da variável global do YACC, \texttt{yylval}, que, embora não surtam efeito presentemente, preparam o   AS para ser adaptado futuramente e permitir o funcionamento da fase seguinte de compilação, a análise semântica. Uma possível alteração a fazer ao AS seria guardar a informação relativa a variáveis tais como o tipo, valor e identificador, e a funções, tais como o tipo de valor retornado, o identificador e os seus parâmetros. Esta informação seria vantajosa pelo facto de ser armazenada numa tabela de símbolos e posteriormente usada pelo Asem para identificar erros semânticos. 
+
+De referir que não foram incluídos, neste trabalho, algoritmos ou estruturas de dados pelo facto de serem usadas as ferramentas Flex e Bison, prescindindo da sua execução.
+
+Em suma, se, por um lado aprofundámos os nossos conhecimentos relativamente ao sistema de preparação de documentos \LaTeX, melhorando significativamente o uso do mesmo, por outro a execução do projeto prático tornou-se aliciante no que concerne ao uso das ferramentas de auxílio à construção de reconhecedores, pelo que o código desenvolvido foi constantemente alterado e melhorado à medida que foi revisto, acompanhando a evolução das nossas competências.
+ 
+\appendix
+\chapter{Anexos dos ficheiros fonte}
+\textbf{Especificação do analisador léxico em Flex.}
+\verbatimtabinput{./source/mycc.l}
+\textbf{Especificação do analisador sintático em Bison.}
+\verbatimtabinput{./source/mycc.y}
+\textbf{Especificação do programa de compilação.}
+
+Embora este ficheiro não tenha sido solicitado, decidiu-se anexar o mesmo por constar do trabalho prático.
+\verbatimtabinput{./source/makefile}
+\chapter{Equipa}
+Relativamente ao grupo, o mesmo foi constituído pelos alunos, Diogo Medeiros, Tiago Lameirão, Eduardo Chaves e João Rodrigues.
+
+Quanto à respetiva contribuição individual, embora determinados campos tenham sido aprofundados por alguns membros, na generalidade, todos acompanharam o desenvolvimento do trabalho, contribuindo pontualmente com sugestões. 
+
+Podemos individualizar a atribuição da especificação do reconhecedor sintático usando a ferramenta YACC/Bison ao membro Diogo Medeiros; a especificação do analisador léxico usando a ferramenta Flex/Lex ao membro Tiago Lameirão; e a realização do relatório aos membros Eduardo Chaves e João Rodrigues, frisando, mais uma vez, a contribuição de todos os membros na realização, quer do trabalho, quer do respetivo relatório.
+
+\bibliographystyle{plain}
+\bibliography{Apont}
+\end{document}
